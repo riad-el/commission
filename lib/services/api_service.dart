@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart'; // Importation ajoutée pour debugPrint
 
 class ApiService {
-  static const String _baseUrl = 'http://www.cmc.pixwellagency.com/public/api/';
+  static const String _baseUrl = 'https://www.cmc.pixwellagency.com/public/api/';
 
   static Future<Map<String, dynamic>?> login(String matricule, String password) async {
     final response = await http.post(
@@ -158,5 +158,20 @@ class ApiService {
       }
     }
     return null; // Retourne null en cas d'échec
+  }
+ static Future<Map<String, dynamic>?> exportNotes(String token, List<int> filiereIds) async {
+    final response = await http.post(
+      Uri.parse('${_baseUrl}admin/export-notes'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'token': token,
+        'filiere_ids': filiereIds,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    return null;
   }
 }

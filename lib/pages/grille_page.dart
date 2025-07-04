@@ -140,6 +140,7 @@ class _GrillePageState extends State<GrillePage> {
     }
     
     final poleNom = commissionDetails?['filieres']?.first?['pole']?['nom_pole'] ?? 'N/A';
+    final commissionNom = commissionDetails?['nom'] ?? 'N/A'; // Récupérer le nom de la commission
 
     pw.TableRow _buildPdfBlocRow({
       required String title,
@@ -213,6 +214,10 @@ class _GrillePageState extends State<GrillePage> {
                     pw.TableRow(children: [ pw.Text('Secteur Groupe: ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)), pw.Text(poleNom) ]),
                     pw.TableRow(children: [ pw.Text('Secteur : ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)), pw.Text(poleNom) ]),
                     pw.TableRow(children: [ pw.Text('Filière: ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)), pw.Text(commissionDetails?['filieres']?.first['nom_filiere'] ?? '') ]),
+                    // ==========================================================
+                    // AJOUT DU NOM DE LA COMMISSION
+                    // ==========================================================
+                    pw.TableRow(children: [ pw.Text('Commission: ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)), pw.Text(commissionNom) ]),
                   ],
                 )),
                 pw.SizedBox(width: 20),

@@ -4,7 +4,7 @@ import 'dart:convert';
 import '../services/api_service.dart';
 import 'dart:math' as math;
 
-// Le widget pour le graphique en anneau (inchangé)
+// Le widget pour le graphique en anneau
 class _EvaluationDoughnutChart extends StatelessWidget {
   final int evaluatedCount;
   final int pendingCount;
@@ -69,8 +69,8 @@ class _EvaluationDoughnutChart extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             SizedBox(
-              width: 200,
-              height: 200,
+              width: 150,
+              height: 150,
               child: CustomPaint(
                 painter: _DoughnutChartPainter(
                   evaluatedPercentage: evaluatedPercentage,
@@ -101,11 +101,12 @@ class _EvaluationDoughnutChart extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Wrap(
+              spacing: 10,
+              runSpacing: 4,
+              alignment: WrapAlignment.center,
               children: [
                 _buildLegendItem(context, Colors.teal.shade400, 'Évalués', evaluatedCount),
-                const SizedBox(width: 10),
                 _buildLegendItem(context, Colors.amber.shade300, 'En attente', pendingCount),
               ],
             ),
@@ -116,7 +117,7 @@ class _EvaluationDoughnutChart extends StatelessWidget {
   }
 }
 
-// Le CustomPainter pour le graphique (inchangé)
+// Le CustomPainter pour le graphique
 class _DoughnutChartPainter extends CustomPainter {
   final double evaluatedPercentage;
   final double pendingPercentage;
@@ -165,7 +166,7 @@ class _DoughnutChartPainter extends CustomPainter {
   }
 }
 
-// Widget principal de la page
+
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
@@ -174,7 +175,6 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  // --- Variables d'état ---
   List<Map<String, dynamic>> candidats = [];
   int totalPasse = 0;
   int totalNonPasse = 0;
@@ -184,7 +184,6 @@ class _DashboardPageState extends State<DashboardPage> {
   String _searchQuery = '';
   int? selectedRowIndex;
   
-  // Clé pour gérer l'ouverture du Drawer sur petits écrans
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
@@ -277,11 +276,6 @@ class _DashboardPageState extends State<DashboardPage> {
     }).toList();
   }
 
-  // ==========================================================
-  // NOUVEAUX WIDGETS DE MISE EN PAGE RESPONSIVE
-  // ==========================================================
-
-  /// Construit la barre latérale, utilisée soit de manière fixe, soit dans un Drawer.
   Widget buildSidebar(BuildContext context) {
     final List<dynamic> filieres = commissionDetails?['filieres'] ?? [];
     final List<dynamic> membres = commissionDetails?['membres'] ?? [];
@@ -348,10 +342,7 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  /// Construit le panneau principal avec le graphique et la table
   Widget buildMainContent(List<Map<String, dynamic>> filteredCandidats, bool isSmallScreen) {
-    
-    // Logique pour déterminer l'état des boutons
     Map<String, dynamic>? selectedCandidat;
     if (selectedRowIndex != null && selectedRowIndex! < filteredCandidats.length) {
       selectedCandidat = filteredCandidats[selectedRowIndex!];
@@ -359,10 +350,32 @@ class _DashboardPageState extends State<DashboardPage> {
     final bool isCandidatSelected = selectedCandidat != null;
     final bool selectedHasPassed = isCandidatSelected && (selectedCandidat['a_passe'] ?? false);
 
-    // Widget pour le panneau des candidats (recherche, boutons, tableau)
-    final candidatePanel = Column(
-      children: [
-        Row(
+    final searchAndButtonControls = isSmallScreen
+      ? Column(
+          children: [
+            TextField(
+              onChanged: (value) => setState(() {
+                _searchQuery = value;
+                selectedRowIndex = null;
+              }),
+              decoration: InputDecoration(
+                labelText: 'Rechercher un candidat...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton.icon(onPressed: isCandidatSelected && selectedHasPassed ? onImprimer : null, icon: const Icon(Icons.print), label: const Text('Imprimer')),
+                const SizedBox(width: 12),
+                ElevatedButton.icon(onPressed: isCandidatSelected && !selectedHasPassed ? onEvaluer : null, icon: const Icon(Icons.edit), label: const Text('Évaluer')),
+              ],
+            )
+          ],
+        )
+      : Row(
           children: [
             Expanded(
               child: TextField(
@@ -382,35 +395,33 @@ class _DashboardPageState extends State<DashboardPage> {
             const SizedBox(width: 16),
             ElevatedButton.icon(onPressed: isCandidatSelected && !selectedHasPassed ? onEvaluer : null, icon: const Icon(Icons.edit), label: const Text('Évaluer')),
           ],
-        ),
+        );
+    
+    final candidatePanel = Column(
+      children: [
+        searchAndButtonControls,
         const SizedBox(height: 16),
-        Expanded(
-          child: buildCustomDataTable(filteredCandidats),
-        ),
+        Expanded(child: buildCustomDataTable(filteredCandidats)),
       ],
     );
 
-    // Retourne la disposition appropriée en fonction de la taille de l'écran
     if (isSmallScreen) {
-      // Sur petit écran, on empile tout verticalement dans une ListView pour le défilement
       return ListView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(16),
         children: [
           _EvaluationDoughnutChart(evaluatedCount: totalPasse, pendingCount: totalNonPasse),
           const SizedBox(height: 24),
-          // Le Container avec une hauteur fixe est nécessaire pour que la Column dans ListView fonctionne
-          SizedBox(height: 600, child: candidatePanel), 
+          SizedBox(height: 650, child: candidatePanel), 
         ],
       );
     } else {
-      // Sur grand écran, on utilise la disposition en Row
       return Padding(
         padding: const EdgeInsets.all(24.0),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              flex: 2,
+              flex: 3,
               child: Align(
                 alignment: Alignment.topCenter,
                 child: _EvaluationDoughnutChart(
@@ -421,7 +432,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             const SizedBox(width: 24),
             Expanded(
-              flex: 5,
+              flex: 7,
               child: candidatePanel,
             ),
           ],
@@ -435,8 +446,12 @@ class _DashboardPageState extends State<DashboardPage> {
     final bool aPasse = candidat['a_passe'] ?? false;
 
     Color getRowColor() {
-      if (aPasse) return Colors.green.withOpacity(0.15);
-      if (isSelected) return Theme.of(context).primaryColor.withOpacity(0.1);
+      if (aPasse) {
+        return Colors.green.withOpacity(0.15);
+      }
+      if (isSelected) {
+        return Theme.of(context).primaryColor.withOpacity(0.1);
+      }
       return Colors.transparent;
     }
 
@@ -499,7 +514,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Point de rupture pour la mise en page responsive
     const double breakpoint = 900.0;
 
     return Scaffold(
@@ -513,7 +527,6 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
       ),
-      // Le Drawer ne s'affiche que sur les petits écrans
       drawer: MediaQuery.of(context).size.width < breakpoint 
         ? Drawer(child: buildSidebar(context)) 
         : null,
@@ -523,10 +536,8 @@ class _DashboardPageState extends State<DashboardPage> {
               builder: (context, constraints) {
                 final isSmallScreen = constraints.maxWidth < breakpoint;
                 if (isSmallScreen) {
-                  // Mise en page pour petits écrans (verticale)
                   return buildMainContent(_getFilteredCandidats(), true);
                 } else {
-                  // Mise en page pour grands écrans (horizontale)
                   return Row(
                     children: [
                       buildSidebar(context),
